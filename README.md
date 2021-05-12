@@ -44,3 +44,11 @@ docker compose exec grpc node ./src/client.js --target nginx:50052
 # On the host:
 node ./src/client.js --target localhost:50052
 ```
+
+## Check out the container metrics
+You can either view them via terminal:
+```sh
+docker stats
+```
+
+or using the browser through cAdvisor at `http://localhost:3003/docker/`
