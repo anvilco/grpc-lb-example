@@ -13,8 +13,24 @@ You can then also run the server from your host, but we focus on using Docker fo
 
 ## Start the client
 
-In docker:
-`docker compose exec grpc node ./src/client.js --target grpc:50051`
+To leverage Docker DNS and load-balancing:
+```sh
+# In docker:
+docker compose exec grpc node ./src/client.js --target grpc:50051
 
-On the host:
-`node ./src/client.js --target localhost:50051`
+## OR
+
+# On the host:
+node ./src/client.js --target localhost:50051
+```
+
+If you would rather use NGINX for more advanced routing:
+```sh
+# In docker:
+docker compose exec grpc node ./src/client.js --target nginx:50052
+
+## OR
+
+# On the host:
+node ./src/client.js --target localhost:50052
+```
