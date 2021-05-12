@@ -56,7 +56,10 @@ function sayGoodbye(call, callback) {
  */
 function main() {
   const server = new grpc.Server();
-  server.addService(hello_world_proto.Greeter.service, { sayHello, sayGoodbye });
+  server.addService(hello_world_proto.Greeter.service, {
+    sayHello,
+    sayGoodbye,
+  });
   server.bindAsync('0.0.0.0:50051', grpc.ServerCredentials.createInsecure(), () => {
     server.start();
     console.log(`Server ${id} up!`)

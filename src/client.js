@@ -34,36 +34,45 @@ const hello_proto = grpc.loadPackageDefinition(packageDefinition).helloworld;
 
 function main() {
   const argv = parseArgs(process.argv.slice(2), { string: 'target' });
-  let target;
-  if (argv.target) {
-    target = argv.target;
-    console.log({ target })
-  } else {
-    target = 'localhost:50051';
-  }
-  const client = new hello_proto.Greeter(target,
-                                       grpc.credentials.createInsecure());
-  let user;
-  if (argv._.length > 0) {
-    user = argv._[0]; 
-  } else {
-    user = 'world';
-  }
-  _.times(10, () => {
-    client.sayHello({name: user}, function(err, response) {
-      if (err) {
-        console.error(err)
-      }
-      console.log('Response:', response?.message);
-    });
-  })
+  const target = argv.target || 'localhost:50051';
+  const iterations = argv.iterations || 100;
+  const logResponses = argv.logResponses || false;
+  const user = argv._.length > 0
+    ? argv._[0]
+    : 'world';
+  console.log({ target, iterations })
 
-  _.times(10, () => {
-    client.sayGoodbye({name: user}, function(err, response) {
+
+  const serversVisited = new Set();
+  const client = new hello_proto.Greeter(target,
+    grpc.credentials.createInsecure());
+
+  // Call the the services iterations times
+  _.times(iterations, (i) => {
+  
+    client.sayHello({ name: user }, function(err, response) {
       if (err) {
         console.error(err)
       }
-      console.log('Response:', response?.message);
+      const msg = response?.message
+      if (msg) {
+        if (logResponses) console.log('Response:', msg);
+        serversVisited.add(msg.split(' ').pop())
+      }
+      if (i === (iterations-1)) {
+        console.log('serversVisited', Array.from(serversVisited))
+      }
+    });
+
+    client.sayGoodbye({ name: user }, function(err, response) {
+      if (err) {
+        console.error(err)
+      }
+      const msg = response?.message
+      if (msg) {
+        if (logResponses) console.log('Response:', msg);
+        serversVisited.add(msg.split(' ').pop())
+      }
     });
   })
 }
