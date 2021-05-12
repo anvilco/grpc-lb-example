@@ -1,0 +1,13 @@
+version: '3.9'
+
+services:
+  grpc:
+    image: grpc_lb
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    volumes:
+      - ./src:/home/node/src:ro
+    ports:
+      - "50051"
+    command: ./src/server.js
