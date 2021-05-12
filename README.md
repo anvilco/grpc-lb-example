@@ -7,7 +7,7 @@ The sample Node.js client and server are from the v1.37.1 tag of https://github.
 ## Set up
 If you want to run the client from your host, you will first need to `yarn install`. This requires that you already have Node setup locally.
 
-You can then also run the server from your host, but we focus on using Docker for the server to leverage the scaling and load-balancing capabilities.
+You can then also run the server from your host, but we focus on using NGINX to proxy to the server to leverage the scaling and load-balancing capabilities.
 
 ## Start the server and proxy
 `docker compose up --scale grpc=4`
@@ -15,6 +15,19 @@ You can then also run the server from your host, but we focus on using Docker fo
 
 ## Start the client
 
+### With load-balancing
+Uses NGINX for more advanced routing and load-balancing:
+```sh
+# In docker:
+docker compose exec grpc node ./src/client.js --target nginx:50052
+
+## OR
+
+# On the host:
+node ./src/client.js --target localhost:50052
+```
+
+### Without load-balancing
 To run client connecting directly to the server (no load-balancing):
 ```sh
 # In docker:
@@ -35,18 +48,6 @@ docker compose ps
 # nginx                    nginx               running             80/tcp, 0.0.0.0:50052->50052/tcp
 node ./src/client.js --target localhost:<a host port you see above, like 63608>
 ```
-
-If you would rather use NGINX for more advanced routing and load-balancing:
-```sh
-# In docker:
-docker compose exec grpc node ./src/client.js --target nginx:50052
-
-## OR
-
-# On the host:
-node ./src/client.js --target localhost:50052
-```
-
 ## Check out the container metrics
 You can either view them via terminal:
 ```sh
