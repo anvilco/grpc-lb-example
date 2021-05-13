@@ -16,11 +16,14 @@
  *
  */
 
-const _ = require('lodash');
+const path = require('path');
+const { promisify } = require('util');
+
+const { timesSeries, times } = require('async');
 const parseArgs = require('minimist');
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
-const path = require('path');
+
 const PROTO_PATH = path.join(__dirname, '/../protos/helloworld.proto');
 const options = {
   keepCase: true,
@@ -36,45 +39,65 @@ function main() {
   const argv = parseArgs(process.argv.slice(2), { string: 'target' });
   const target = argv.target || 'localhost:50051';
   const iterations = argv.iterations || 100;
+  const batchSize = argv.batchSize || 100;
   const logResponses = argv.logResponses || false;
   const user = argv._.length > 0
     ? argv._[0]
     : 'world';
-  console.log({ target, iterations })
+  console.log({ target, iterations, batchSize, logResponses })
 
 
   const serversVisited = new Set();
   const client = new hello_proto.Greeter(target,
     grpc.credentials.createInsecure());
 
-  // Call the the services iterations times
-  _.times(iterations, (i) => {
+  const sayHello = promisify(client.sayHello).bind(client);
+  const sayGoodbye = promisify(client.sayGoodbye).bind(client);
   
-    client.sayHello({ name: user }, function(err, response) {
-      if (err) {
-        console.error(err)
+  // This is the function we want to run a total of `iterations` times in batches
+  // of size `batchSize`
+  const fnToRunInBatches = async (n, next) => {
+    function handleResponse (message) {
+      if (message) {
+        if (logResponses) console.log('Response:', message);
+        serversVisited.add(message.split(' ').pop());
       }
-      const msg = response?.message
-      if (msg) {
-        if (logResponses) console.log('Response:', msg);
-        serversVisited.add(msg.split(' ').pop())
-      }
-      if (i === (iterations-1)) {
-        console.log('serversVisited', Array.from(serversVisited))
-      }
-    });
+    }
+    const payload = { name: user };
+    try {
+      const { message } = await sayHello(payload);
+      handleResponse(message);
+    } catch (err) {
+      console.error(err);
+      return next(err, null);
+    }
+    try {
+      const { message } = await sayGoodbye(payload);
+      handleResponse(message);
+    } catch (err) {
+      console.error(err);
+      return next(err, null);
+    }
 
-    client.sayGoodbye({ name: user }, function(err, response) {
-      if (err) {
-        console.error(err)
-      }
-      const msg = response?.message
-      if (msg) {
-        if (logResponses) console.log('Response:', msg);
-        serversVisited.add(msg.split(' ').pop())
-      }
-    });
-  })
+    // Add delay after the last run in a batchSize to not hammer the server
+    if (n === (batchSize-1)) {
+      const sleepMS = 100;
+      await new Promise(resolve => setTimeout(resolve, sleepMS));
+      console.log('Batch finished...')
+    }
+
+    next(null, null);
+  };
+
+  // Handles the batching behavior we want
+  const numberOfBatchesToRun = Math.round(iterations / batchSize);
+  timesSeries(
+    numberOfBatchesToRun,
+    // function to run for `numberOfBatchesToRun` times in series
+    (__, next) => times(batchSize, fnToRunInBatches, next),
+    // function to run after all our requests are done
+    () => console.log('serversVisited', Array.from(serversVisited)),
+  )
 }
 
 main();
