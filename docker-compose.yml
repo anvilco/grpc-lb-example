@@ -36,5 +36,4 @@ services:
       - /dev/disk/:/dev/disk:ro
     ports:
       - "3003:8080"
-    command: ./src/server.js
-  
+
