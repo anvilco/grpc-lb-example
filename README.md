@@ -19,7 +19,7 @@ You can then also run the server from your host, but we focus on using NGINX to 
 Uses NGINX for more advanced routing and load-balancing:
 ```sh
 # In docker:
-docker compose exec grpc node ./src/client.js --target nginx:50052
+docker compose run --rm grpc ./src/client.js --target nginx:50052 --iterations 10000 --batchSize 100
 
 ## OR
 
@@ -31,7 +31,7 @@ node ./src/client.js --target localhost:50052
 To run client connecting directly to the server (no load-balancing):
 ```sh
 # In docker:
-docker compose exec grpc node ./src/client.js --target grpc:50051
+docker compose run --rm grpc ./src/client.js --target grpc:50051 --iterations 10000 --batchSize 100
 
 ## OR
 
