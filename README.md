@@ -24,7 +24,7 @@ docker compose run --rm grpc ./src/client.js --target nginx:50052 --iterations 1
 ## OR
 
 # On the host:
-node ./src/client.js --target localhost:50052
+node ./src/client.js --target localhost:50052 --iterations 10000 --batchSize 100
 ```
 
 ### Without load-balancing
@@ -46,7 +46,7 @@ docker compose ps
 # grpc-lb-example_grpc_3   grpc                running             0.0.0.0:63609->50051/tcp
 # grpc-lb-example_grpc_4   grpc                running             0.0.0.0:63612->50051/tcp
 # nginx                    nginx               running             80/tcp, 0.0.0.0:50052->50052/tcp
-node ./src/client.js --target localhost:<a host port you see above, like 63608>
+node ./src/client.js --target localhost:<a host port you see above, like 63608> --iterations 10000 --batchSize 100
 ```
 ## Check out the container metrics
 You can either view them via terminal:
